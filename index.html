@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Подсчёт баллов СЦР</title>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Comfortaa', sans-serif;
+      background-color: #2e1a47;
+      color: white;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px;
+    }
+
+    h1 {
+      color: #d1b3ff;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 90%;
+      max-width: 1000px;
+      height: 200px;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 10px;
+      border: none;
+      font-family: 'Comfortaa', sans-serif;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #8c5fd4;
+      color: white;
+      padding: 12px 25px;
+      font-size: 16px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #a574ff;
+    }
+
+    table {
+      margin-top: 30px;
+      width: 90%;
+      max-width: 1000px;
+      border-collapse: collapse;
+      background-color: #4c3270;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      border: 1px solid #7e57c2;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #6d4aa5;
+      color: #f3eaff;
+    }
+  </style>
+</head>
+<body>
+  <h1>Подсчёт баллов СЦР</h1>
+  <textarea id="input" placeholder="Вставьте сюда отчёты травников, мохосборов и веточников..."></textarea>
+  <button onclick="processReports()">Посчитать баллы</button>
+
+  <table id="results" style="display: none">
+    <thead>
+      <tr>
+        <th>Имя игрока</th>
+        <th>Посещения</th>
+        <th>Ведения</th>
+        <th>Ветки</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    function processReports() {
+      const text = document.getElementById('input').value;
+      const lines = text.split(/\n|\r/).map(l => l.trim()).filter(Boolean);
+      const visits = {}, leads = {}, branches = {};
+
+      const ignoreWords = ["ведёт", "ведет", "с ним", "с ней", "верх", "низ", "нижний", "верхний"];
+      const ignoreMoho = ["каменистая тропа", "крутой спуск", "сонное озеро", "долина", "следящий"];
+
+      for (const line of lines) {
+        const normalized = line.toLowerCase();
+
+        if (/\d/.test(line)) {
+          // веточник
+          const match = line.match(/^(.+?)[\-—]\s*(\d+)/);
+          if (match) {
+            const name = match[1].trim();
+            const score = parseInt(match[2], 10);
+            branches[name] = (branches[name] || 0) + score;
+          }
+        } else {
+          const lower = line.toLowerCase();
+          const moho = ignoreMoho.some(word => lower.includes(word));
+          const isLead = /вед[её]т\s(.+)/i.exec(line);
+
+          if (isLead) {
+            const name = isLead[1].split(',')[0].trim();
+            leads[name] = (leads[name] || 0) + 1;
+          }
+
+          // удаляем все стоп-слова
+          let clean = line;
+          ignoreWords.forEach(w => {
+            const re = new RegExp(w, 'gi');
+            clean = clean.replace(re, '');
+          });
+
+          if (moho) {
+            ignoreMoho.forEach(w => {
+              const re = new RegExp(w + ':?', 'gi');
+              clean = clean.replace(re, '');
+            });
+          }
+
+          const names = clean.split(',')
+            .map(n => n.trim())
+            .filter(n => n.length > 1);
+
+          names.forEach(name => {
+            if (!name) return;
+            visits[name] = (visits[name] || 0) + 1;
+          });
+        }
+      }
+
+      const allNames = new Set([
+        ...Object.keys(visits),
+        ...Object.keys(leads),
+        ...Object.keys(branches)
+      ]);
+
+      const tbody = document.querySelector('#results tbody');
+      tbody.innerHTML = '';
+
+      allNames.forEach(name => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${name}</td>
+          <td>${visits[name] || 0}</td>
+          <td>${leads[name] || 0}</td>
+          <td>${branches[name] || 0}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      document.getElementById('results').style.display = 'table';
+    }
+  </script>
+</body>
+</html>
