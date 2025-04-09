@@ -113,10 +113,17 @@
         }
 
         // Следящие
-        if (/Следящий[ВМ]?:?/i.test(line)) {
-          const isBranches = /СледящийВ/i.test(line);
-          const isMoho = /СледящийМ/i.test(line);
-          continue; // не учитываем "следящих" как игроков
+        const mohoMatch = line.match(/СледящийМ:?(.*)/i);
+        if (mohoMatch && mohoMatch[1]) {
+          const name = mohoMatch[1].trim();
+          visits[name] = (visits[name] || 0) + 1;
+          continue;
+        }
+        const branchMatch = line.match(/СледящийВ:?(.*)/i);
+        if (branchMatch && branchMatch[1]) {
+          const name = branchMatch[1].trim();
+          branches[name] = (branches[name] || 0) + 1;
+          continue;
         }
 
         // Ведущий
@@ -175,3 +182,4 @@
   </script>
 </body>
 </html>
+
