@@ -71,6 +71,14 @@
       color: #f3eaff;
     }
 
+    tbody tr:nth-child(even) {
+      background-color: #593a80;
+    }
+
+    tbody tr:nth-child(odd) {
+      background-color: #4c3270;
+    }
+
     tfoot td {
       font-weight: bold;
       background-color: #5a3a85;
@@ -116,13 +124,12 @@
       const lines = text.split(/[\n\r]/).map(l => l.trim()).filter(Boolean);
       const visits = {}, leads = {}, branches = {};
 
-      const ignoreWords = ["ведёт", "ведет", "с ним", "с ней", "верх", "низ", "нижний", "верхний"];
+      const ignoreWords = ["ведёт", "ведет", "с ним", "с ней", "за ним", "за ней", "верх", "низ", "нижний", "верхний"];
       const ignoreMoho = ["каменистая тропа", "крутой спуск", "сонное озеро", "долина"];
 
       for (const line of lines) {
         const lowerLine = line.toLowerCase();
 
-        // Веточник
         if (/\d/.test(line) && /[-—]\s*\d+/.test(line)) {
           const match = line.match(/^(.+?)\s*[-—]\s*(\d+)/);
           if (match) {
@@ -133,7 +140,6 @@
           continue;
         }
 
-        // Следящие
         const mohoMatch = line.match(/СледящийМ:?(.*)/i);
         if (mohoMatch && mohoMatch[1]) {
           const name = mohoMatch[1].trim();
@@ -147,14 +153,12 @@
           continue;
         }
 
-        // Ведущий
         const leadMatch = /вед[её]т\s+([^.,]+)/i.exec(line);
         if (leadMatch) {
           const name = leadMatch[1].trim();
           leads[name] = (leads[name] || 0) + 1;
         }
 
-        // Удаляем стоп-слова
         let cleanedLine = line;
         ignoreWords.forEach(w => {
           const re = new RegExp(w, 'gi');
